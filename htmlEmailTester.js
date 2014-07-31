@@ -19,6 +19,10 @@ db.style.backgroundPositionX = "50%";
 db.style.backgroundPositionY = "0px";
 
 var html = "";
+html += "<div id='hideContainer'>";
+html += "<span>[<a id='hideTester' href='#'>hide tester</a>]</span>";
+html += "</div>";
+html += "<div id='htmlTester'>";
 html += "<h1>Html email tester</h1>";
 html += "<label for='url'>Bg url:</label><br />";
 html += "<input style='background-color:#0f0;' type='text' name='url' id='url' value='bg.jpg'></input><br />";
@@ -32,8 +36,9 @@ html += "<br />";
 html += "<button id='check'>Check html</button>";
 html += "<h2>Legend <span style='font-size:50%;'>(These cells will break in Outlook)</span></h2>";
 html += "<p style='background-color:#f00;border:1px solid #000;'>Cell is too low in height</p>";
-html += "<p style='background-color:#FFFF00;border:1px solid #000;'>Cell is on single line with line-height differing from font-size</p>";
+html += "<p style='background-color:#FFFF00;border:1px solid #000;'>Cell content is on single line with line-height differing from font-size</p>";
 html += "<p style='background-color:#00f;border:1px solid #000;color:#fff'>Cell is missing valign or align-attribute</p>";
+html += "</div>"
 
 var formDiv = document.createElement("div");
 var css = {
@@ -45,6 +50,7 @@ var css = {
 for(var rule in css)
 	formDiv.style[rule] = css[rule];
 
+formDiv.setAttribute("id", "container");
 formDiv.innerHTML = html;
 
 db.insertBefore(formDiv, db.childNodes[0]);
@@ -55,7 +61,9 @@ var hideBtn  = document.getElementById("hide");
 var checkBtn = document.getElementById("check");
 var resetBtn = document.getElementById("reset");
 var urlBox   = document.getElementById("url");
+var hideTesterBtn = document.getElementById("hideTester");
 
+var testerHidden = false;
 var bgHidden = false;
 var bgPos = parseInt(db.style.backgroundPositionY);
 var checkBtnWidth = checkBtn.offsetWidth;
@@ -72,6 +80,18 @@ hideBtn.addEventListener('click', function(){
 		db.style.backgroundImage = "";
 		bgHidden = true;
 		hideBtn.innerText = "Show bg";
+	}
+}, false);
+
+hideTesterBtn.addEventListener('click', function(){
+	if (testerHidden) {
+		testerHidden = false;
+		hideTesterBtn.innerText = "hide tester";
+		document.getElementById("htmlTester").style.display="block";
+	} else {
+		testerHidden = true;
+		hideTesterBtn.innerText = "show tester";
+		document.getElementById("htmlTester").style.display="none";
 	}
 }, false);
 
