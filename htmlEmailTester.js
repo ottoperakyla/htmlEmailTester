@@ -13,6 +13,7 @@
 var db = document.body;
 var defBg = 'bg.jpg';
 var bgVal = getBgUrl(defBg);
+var oldHtml = document.getElementsByTagName("table")[0].innerHTML;
 
 db.style.backgroundImage = bgVal;
 db.style.backgroundRepeat    = "no-repeat";
@@ -29,7 +30,6 @@ cant get image/image size like this for some reason (not loaded yet??)
 console.log(imgg);
 
 */
-
 var html = "";
 html += "<div id='hideContainer'>";
 html += "<span>[<a id='hideTester' href='#'>hide tester</a>]</span>";
@@ -46,6 +46,10 @@ html += "<br />";
 html += "<button id='reset'>Reset bg</button>";
 html += "<br />";
 html += "<button id='hide'>Hide bg</button>";
+html += "<br />";
+html += "<button id='html'>Hide html</button>";
+html += "<br />";
+html += "<button id='borders'>Show borders</button>";
 html += "<br />";
 html += "<button id='check'>Check html</button>";
 html += "<h2>Legend <span style='font-size:50%;'>(These cells will break in Outlook)</span></h2>";
@@ -81,15 +85,22 @@ var checkBtn = document.getElementById("check");
 var resetBtn = document.getElementById("reset");
 var urlBox   = document.getElementById("url");
 var hideTesterBtn = document.getElementById("hideTester");
+var borderBtn = document.getElementById("borders");
+var htmlBtn = document.getElementById("html");
 
 var testerHidden = false;
 var bgHidden = false;
+var htmlHidden = false;
+var bordersOn = false;
+
 var bgPosY = parseInt(db.style.backgroundPositionY);
 var bgPosX = parseInt(db.style.backgroundPositionX);
-var checkBtnWidth = checkBtn.offsetWidth;
+var borderBtnWidth = borderBtn.offsetWidth;
+var widenBtns = [hideBtn, resetBtn, checkBtn, htmlBtn];
 
-hideBtn.style.width = checkBtnWidth + "px";
-resetBtn.style.width = checkBtnWidth + "px";
+for (var i = 0; i < widenBtns.length; i++) {
+	widenBtns[i].style.width = borderBtnWidth + "px";
+}
 
 hideBtn.addEventListener('click', function(){
 	if (bgHidden) {
@@ -112,6 +123,31 @@ hideTesterBtn.addEventListener('click', function(){
 		testerHidden = true;
 		hideTesterBtn.innerText = "show tester";
 		document.getElementById("htmlTester").style.display="none";
+	}
+}, false);
+
+htmlBtn.addEventListener('click', function(){
+	if(htmlHidden){
+		htmlHidden = false;
+		htmlBtn.innerText = "Hide html";
+		document.getElementsByTagName("table")[0].innerHTML = oldHtml;
+	} else {
+		htmlHidden = true;
+		htmlBtn.innerText = "Show html";
+		document.getElementsByTagName("table")[0].innerHTML = "";
+	}
+	//document.getElementsByTagName("table")[0].innerHTML=""
+},false);
+
+borderBtn.addEventListener('click', function(){
+	if (bordersOn) {
+		bordersOn = false;
+		borderBtn.innerText = "Show borders";
+		setBorders(0);
+	} else {
+		bordersOn = true;
+		borderBtn.innerText = "Hide borders";
+		setBorders(1);
 	}
 }, false);
 
@@ -162,6 +198,17 @@ function imageNotFound() {
 	db.style.backgroundImage = "";
 	urlBox.style.backgroundColor = "#f00";
 	alert(getImgMsg() + " cannot be found");
+}
+
+function setBorders(bool){
+	var tbl = document.getElementsByTagName("table")[0];
+	var subTbls = tbl.getElementsByTagName("table");
+
+	tbl.setAttribute("border", bool);
+
+	for (var i = 0; i < subTbls.length; i++) {
+		subTbls[i].setAttribute("border", bool);
+	}
 }
 
 function getCurrentBg(){
@@ -215,14 +262,14 @@ function checkHTML(){
 	}
 
 	function getInnerText(el) {
-		return el.innerText;
+		return el.innerText.length ? el.innerText : false;
 	}
 
 	// check tds
 	for(var i=0;i<tds.length;i++){
 		td = tds[i];
-		if(td.offsetHeight<19 && !td.hasAttribute("height")){
-			td.style.border = "1px solid #000";
+		if(td.offsetHeight < 19 && !td.hasAttribute("height")){
+			td.style.outline = "1px solid #000"; // using outline because it doesnt increase element height/width
 			td.style.backgroundColor="#f00";
 			heightTooLow.push(td);
 			setError();
@@ -230,7 +277,8 @@ function checkHTML(){
 
 		phoneRegexMatched = td.innerText.match(phoneRegex);
 
-		// todo fix this, currently matching the td containing other tds
+		// todo fix this, currently matching the most outmost td
+		// containing the other td's
 		// and not a single td with a phone number
 		if (phoneRegexMatched && unstyledPhonenumbers.indexOf(phoneRegexMatched[0]) == -1 /*&& !td.hasAttribute("style")*/) {
 			console.log(td);
@@ -267,7 +315,7 @@ function checkHTML(){
 	}
 
 	if(!errors && !warnings) {
-		alert("HTML passed");
+		alert("HTML passed! ;-)");
 	} else { // print errors & warnings
 		if(errors) {
 			var missingAltsString = "";
@@ -280,7 +328,8 @@ function checkHTML(){
 				missingAltsString += getImgName(missingAlts[i]) + "\n";
 			}
 			for (var i = 0; i < heightTooLow.length; i++) {
-				heightTooLowString += getInnerText(heightTooLow[i]) + "\n";
+				heightTooLowString += getInnerText(heightTooLow[i]) ? getInnerText(heightTooLow[i]) : "empty element";
+				heightTooLowString += " (define height to " + heightTooLow[i].offsetHeight + " px)\n";
 			}
 			for (var i = 0; i < missingSnoobi.length; i++) {
 				missingSnoobiString += missingSnoobi[i] + "\n";
