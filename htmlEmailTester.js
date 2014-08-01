@@ -2,6 +2,7 @@
 
 // todo:
 // DONT ADD ERRORS/WARNINGS TO ARRAYS JUST BUILD STRING AT ONCE
+// BACKGROUND CENTERING
 // check for missing td valign && align attributes
 // check for missing target attributes on a-tags (?)
 // check for single line cells with line-height differing from font-size
@@ -11,12 +12,23 @@
 
 var db = document.body;
 var defBg = 'bg.jpg';
-var bgVal = getBgVal(defBg);
+var bgVal = getBgUrl(defBg);
 
-db.style.backgroundImage     = bgVal;
+db.style.backgroundImage = bgVal;
 db.style.backgroundRepeat    = "no-repeat";
-db.style.backgroundPositionX = "50%";
+db.style.backgroundPositionX = "505px";//...
 db.style.backgroundPositionY = "0px";
+
+/*
+need to init image with current document background and get its width
+then set backgroundPositionX to (document.clientWidth-backgroundImage.width)/2 (IN PIXELS!)
+var imgg = new Image();
+imgg.src = getCurrentBg();	
+console.log(getCurrentBg());
+cant get image/image size like this for some reason (not loaded yet??)
+console.log(imgg);
+
+*/
 
 var html = "";
 html += "<div id='hideContainer'>";
@@ -27,7 +39,9 @@ html += "<h1>Html email tester</h1>";
 html += "<label for='url'>Bg url:</label><br />";
 html += "<input style='background-color:#0f0;' type='text' name='url' id='url' value='bg.jpg'></input><br />";
 html += "<button id='up'>&#8593;</button>";
-html += "<button id='down'>&#8595;</button>";
+html += "<button id='down'>&#8595;</button>"; 
+html += "<button id='left'>&#8592;</button>"; 
+html += "<button id='right'>&#8594;</button>"; 
 html += "<br />";
 html += "<button id='reset'>Reset bg</button>";
 html += "<br />";
@@ -44,7 +58,10 @@ var formDiv = document.createElement("div");
 var css = {
 	position: 'fixed',
 	top: '20px',
-	left: '20px'
+	left: '20px',
+	border: '1px solid #000',
+	padding: '20px',
+	backgroundColor: "#fff"
 };
 
 for(var rule in css)
@@ -57,6 +74,8 @@ db.insertBefore(formDiv, db.childNodes[0]);
 
 var upBtn    = document.getElementById("up");
 var downBtn  = document.getElementById("down");
+var leftBtn  = document.getElementById("left");
+var rightBtn  = document.getElementById("right");
 var hideBtn  = document.getElementById("hide");
 var checkBtn = document.getElementById("check");
 var resetBtn = document.getElementById("reset");
@@ -65,7 +84,8 @@ var hideTesterBtn = document.getElementById("hideTester");
 
 var testerHidden = false;
 var bgHidden = false;
-var bgPos = parseInt(db.style.backgroundPositionY);
+var bgPosY = parseInt(db.style.backgroundPositionY);
+var bgPosX = parseInt(db.style.backgroundPositionX);
 var checkBtnWidth = checkBtn.offsetWidth;
 
 hideBtn.style.width = checkBtnWidth + "px";
@@ -96,11 +116,19 @@ hideTesterBtn.addEventListener('click', function(){
 }, false);
 
 upBtn.addEventListener('click', function(){
-	db.style.backgroundPositionY = --bgPos + "px";
+	db.style.backgroundPositionY = --bgPosY + "px";
 }, false);
 
 downBtn.addEventListener('click', function(){
-	db.style.backgroundPositionY = ++bgPos + "px";
+	db.style.backgroundPositionY = ++bgPosY + "px";
+}, false);
+
+leftBtn.addEventListener('click', function(){
+	db.style.backgroundPositionX = --bgPosX + "px";
+}, false);
+
+rightBtn.addEventListener('click', function(){
+	db.style.backgroundPositionX = ++bgPosX + "px";
 }, false);
 
 checkBtn.addEventListener('click', function(){
@@ -125,7 +153,7 @@ function testImage(URL) {
 }
 
 function imageFound() {
-	db.style.backgroundImage = getBgVal(urlBox.value);
+	db.style.backgroundImage = getBgUrl(urlBox.value);
 	urlBox.style.backgroundColor = "#0f0";
 	alert(getImgMsg() + " loaded as background");
 }
@@ -136,18 +164,23 @@ function imageNotFound() {
 	alert(getImgMsg() + " cannot be found");
 }
 
+function getCurrentBg(){
+	return document.body.style.backgroundImage.match(/url\(([^\)]+)/)[1];;
+}
+
 function getImgMsg(){
 	return "Image with src: '" + urlBox.value;
 }
 
-function getBgVal(bgUrl){
+function getBgUrl(bgUrl){
 	return "url('"+bgUrl+"')";
 }
 
 function checkHTML(){
-	var tds  = document.getElementsByTagName("td");
-	var imgs = document.getElementsByTagName("img");
-	var as   = document.getElementsByTagName("a");
+	var table = document.getElementsByTagName("table")[0];
+	var tds   = table.getElementsByTagName("td");
+	var imgs  = table.getElementsByTagName("img");
+	var as    = table.getElementsByTagName("a");
 
 	var td  = "";
 	var img = "";
@@ -221,7 +254,6 @@ function checkHTML(){
 	}
 
 	// check as
-	var as = document.getElementsByTagName("a");
 	for (var i = 0; i < as.length; i++) {
 		href = as[i].href;
 		if (ignoreRegex.test(href)) 
