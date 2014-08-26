@@ -4,14 +4,11 @@
 // todo:
 // BACKGROUND CENTERING
 
-var defBg = 'bg.jpg';
 var db = document.body;
-var defOutline = "1px solid #000";
-var bgVal = getBgUrl(defBg);
 var bodyHeight = document.body.clientHeight;
 
-db.style.backgroundImage = bgVal;
 db.style.height = 200 + bodyHeight + "px";
+db.style.backgroundImage = "url('bg.jpg')";
 db.style.backgroundRepeat    = "no-repeat";
 
 db.style.backgroundPositionX = localStorage.getItem('backgroundX') ? localStorage.getItem('backgroundX') : calcDefaultBgPos() + "px";//default to mid
@@ -25,31 +22,18 @@ html += "</div>";
 html += "<div id='htmlTester'>";
 html += "<h1>Html email tester</h1>";
 html += "<input style='margin-left:0;' type='checkbox' id='isEemeliMail'></input><label for='isEemeliMail'>Eemeli mail</label><br />";
-html += "<button style='width:100%' id='resetBg'>Reset bg</button>";
+html += "<button id='resetBg'>Reset bg</button>";
 html += "<br />";
-html += "<button style='width:100%' id='toggleBg'>Hide bg</button>";
+html += "<button id='toggleBg'>Hide bg</button>";
 html += "<br />";
-html += "<button style='width:100%' id='toggleHtml'>Hide html</button>";
+html += "<button id='toggleHtml'>Hide html</button>";
 html += "<br />";
-html += "<button style='width:100%' id='toggleBorders'>Show borders</button>";
+html += "<button id='toggleBorders'>Show borders</button>";
 html += "<br />";
-html += "<button style='width:100%' id='checkHtml'>Check html</button>";
+html += "<button id='checkHtml'>Check html</button>";
 html += "</div>";
 
 var formDiv = document.createElement("div");
-var css = {
-	fontFamily: 'Comic Sans MS',
-	color: 'hotpink',
-	position: 'fixed',
-	top: '20px',
-	left: '20px',
-	border: '1px solid #000',
-	padding: '20px',
-	backgroundColor: "#fff"
-};
-
-setStyles(formDiv, css);
-
 formDiv.setAttribute("id", "container");
 formDiv.innerHTML = html;
 
@@ -63,7 +47,7 @@ document.onkeypress = function(event) {
 	event = event || window.event;
 	var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
 
-if(charCode) {
+	if(charCode) {
 if(charCode == 13) { // enter pressed, save position
 	localStorage.setItem('backgroundX', db.style.backgroundPositionX);
 	localStorage.setItem('backgroundY', db.style.backgroundPositionY);
@@ -118,7 +102,7 @@ isEemeliMail.addEventListener('click', function(){
 
 document.getElementById("toggleBg").addEventListener('click', function(){
 	if (bgHidden) {
-		db.style.backgroundImage = bgVal;
+		db.style.backgroundImage = "url('bg.jpg')";
 		bgHidden = false;
 		this.innerText = "Hide bg";
 	} else {
@@ -187,11 +171,6 @@ function calcDefaultBgPos(){
 	return 520;
 }
 
-function setStyles(el, css){
-	for(var rule in css)
-		el.style[rule] = css[rule];
-}
-
 function setBorders(bool){
 	var tbl = document.getElementsByTagName("table")[0];
 	var subTbls = tbl.getElementsByTagName("table");
@@ -227,33 +206,63 @@ function getCurrentBg(){
 	return db.style.backgroundImage.match(/url\(([^\)]+)/)[1];
 }
 
-function getBgUrl(bgUrl){
-	return "url('"+bgUrl+"')";
+function getDomElementFromEvent(ev){
+	return document.getElementById("dom" + ev.target.id);
 }
 
 function attachErrorMsgListeners() {
 	var errorTdLis = document.getElementById("errors").getElementsByTagName("li");
+	var href;
+	var errorTd;
 
 	for (var i = 0; i < errorTdLis.length; i++) {
-		errorTdLis[i].addEventListener("mouseover", function(event){
-			var css = {
-				outline: "1px solid #f00"
-			};
-			var domElement = document.getElementById("dom"+event.target.id);
-			var orgHeight = domElement.offsetHeight;
-			setStyles(domElement,css);
+		errorTd = errorTdLis[i];
 
+		errorTd.addEventListener("mouseover", function(event){
+			getDomElementFromEvent(event).classList.add('et_activeDomElement');
+			this.classList.add('et_activeLink');
+			href = this;
 		}, false);
-		errorTdLis[i].addEventListener("mouseout", function(event){
-			setTimeout(function(){
-				document.getElementById("dom"+event.target.id).style.outline="none";
-			}, 500);
-		})
+
+		errorTd.addEventListener("mouseout", function(event){
+			getDomElementFromEvent(event).classList.remove('et_activeDomElement');
+			href.classList.remove('et_activeLink');
+		}, false);
 	};
 }
 
 
 function checkHTML(){
+	function getImgName(img){
+		return img.src.substring(img.src.lastIndexOf("/")+1);
+	}
+
+	function getInnerText(el) {
+		return el.innerText.length ? el.innerText : false;
+	}
+
+	function getTesterOffset() {
+		var c = document.getElementById("container");
+		return c.offsetHeight + c.offsetTop;
+	}
+
+	function getErrorLink(el) {
+	// strip "dom" from element id
+	// check innertext length so that tds
+	// that only have the content "&nbsp;" dont get included
+	var elLinkText = el.src ? el.src : el.innerText.length > 10 ? el.innerText : el; 
+	return "<li><a id='" + el.id.substring(3) + "' style='color:#00f;' href='#'>" + elLinkText + "</a></li>";
+	}
+
+	function printMessageForm(message) {
+		var formDiv = document.createElement("div");
+		formDiv.setAttribute("id", "errors");
+		formDiv.style.width = document.getElementById("container").offsetWidth + "px";
+		formDiv.innerHTML = message;
+		db.insertBefore(formDiv, db.childNodes[0]);
+		attachErrorMsgListeners();
+	}
+
 	var table = document.getElementsByTagName("table")[0];
 	var tds   = table.getElementsByTagName("td");
 	var imgs  = table.getElementsByTagName("img");
@@ -269,161 +278,98 @@ function checkHTML(){
 	var missingSnoobi    = [];
 	var missingRedirect  = [];
 
-	var errors = false;
-	var warnings = false;
+	var error = false;
 
 	var snoobiRegex = /.+\?(newsletter|ad)=.+/;
 	var ignoreLinkRegex = /.+\.(pdf|docx?|pptx?|xslx?)\??.*|#/;
 
-	function setError(){
-		if (!errors) 
-			errors = true;
+	// check tds
+	var hasHeight = false;
+
+	for(var i=0;i<tds.length;i++){
+		td = tds[i];
+		hasHeight = td.hasAttribute("height");
+		if((td.offsetHeight < 19 && !hasHeight)){
+			td.setAttribute('id','domErrorTd_'+i);
+			heightTooLow.push(td);
+			error = true;
+		} 
 	}
 
-	function setWarning(){
-		if(!warnings)
-			warnings = true;
+	// check imgs
+	for (var i = 0; i < imgs.length; i++) {
+		img = imgs[i];
+		if (!img.hasAttribute("alt") || img.getAttribute("alt") == "") {
+			img.setAttribute('id', 'domErrorImg_'+i);
+			missingAlts.push(img);
+			error = true;
+		} 
 	}
 
-	function getImgName(img){
-		return img.src.substring(img.src.lastIndexOf("/")+1);
+	// check as
+	for (var i = 0; i < as.length; i++) {
+		if (ignoreLinkRegex.test(as[i])) 
+			continue;
+
+		if (!snoobiRegex.test(as[i])) {
+			missingSnoobi.push(as[i]);
+			error = true;
+		}
+
+		if (isEemeliMail.checked && !as[i].hasAttribute("redirect")) {
+			as[i].setAttribute('id', 'domErrorRedirect_'+i);
+			missingRedirect.push(as[i]);
+			error = true;
+		}
 	}
 
-	function getInnerText(el) {
-		return el.innerText.length ? el.innerText : false;
-	}
+	if(error) {
+		var missingSnoobiString = "<ul id='snoobiErrors'>";
+		var heightTooLowString = "<ul id='heightTooLowErrors'>";
+		var missingRedirectString = "<ul id='missingRedirectErrors'>";
+		var missingAltString = "<ul id='missingAltErrors'>";
+		var errorMsg = "<h2 style='color:#f00 !important;'>Errors</h2>";
 
-	function getTesterOffset() {
-		var c = document.getElementById("container");
-		return c.offsetHeight + c.offsetTop;
-	}
+		for (var i = 0; i < missingSnoobi.length; i++) {
+			missingSnoobiString += "<li>" + missingSnoobi[i] + "</li>";
+		}
+		missingSnoobiString += "</ul>";
 
-	function getErrorLink(el) {
-// strip "dom" from element id
-// check innertext length so that tds
-// that only have the content "&nbsp;" dont get included
-var elLinkText = el.src ? el.src : el.innerText.length > 10 ? el.innerText : el; 
-return "<li><a id='" + el.id.substring(3) + "' style='color:#00f;' href='#'>" + elLinkText + "</a></li>";
-}
+		for (var i = 0; i < heightTooLow.length; i++) {
+			heightTooLowString += getErrorLink(heightTooLow[i]);
+		}
+		heightTooLowString += "</ul>";
 
-function printMessageForm(message) {
-	var formDiv = document.createElement("div");
-	var css = {
-		position: 'fixed',
-		top: "20px",
-		width: document.getElementById("container").offsetWidth + "px",
-		right: '20px',
-		border: '1px solid #000',
-		padding: '20px',
-		backgroundColor: "#fff",
-		overflow: "auto"
-	};
+		for (var i = 0; i < missingRedirect.length; i++) {
+			missingRedirectString +=  getErrorLink(missingRedirect[i]);
+		}
+		missingRedirectString += "</ul>";
 
-	setStyles(formDiv, css);
+		for (var i = 0; i < missingAlts.length; i++) {
+			missingAltString += getErrorLink(missingAlts[i]);
+		}
+		missingAltString += "</ul>";
 
-	formDiv.setAttribute("id", "errors");
+		if (missingSnoobiString) {
+			errorMsg += "<h3>Found links with missing/broken snoobi tags</h3>" + missingSnoobiString;
+		}
 
-	formDiv.innerHTML = message;
-	db.insertBefore(formDiv, db.childNodes[0]);
-	attachErrorMsgListeners();
-}
+		if (heightTooLowString) {
+			errorMsg += "<h3>Found tds with too low height</h3>" + heightTooLowString;
+		}
 
-// check tds
-var hasHeight = false;
+		if (missingRedirect.length && missingRedirectString) {
+			errorMsg += "<h3>Found hrefs with missing redirect-attribute (eemeli-mail)</h3>" + missingRedirectString;
+		}
 
-for(var i=0;i<tds.length;i++){
-	td = tds[i];
-	hasHeight = td.hasAttribute("height");
-	if((td.offsetHeight < 19 && !hasHeight)){
-		td.setAttribute('id','domErrorTd_'+i);
-		heightTooLow.push(td);
-		setError();
-	} 
+		if (missingAltString) {
+			errorMsg += "<h3>Found imgs with missing or empty alt-attribute</h3>" + missingAltString;
+		}
 
-	/*if (!td.hasAttribute("valign") || !td.hasAttribute("valign")) {
-
-setError();
-}*/
-}
-
-// check imgs
-for (var i = 0; i < imgs.length; i++) {
-	img = imgs[i];
-	if (!img.hasAttribute("alt") || img.getAttribute("alt") == "") {
-		img.setAttribute('id', 'domErrorImg_'+i);
-		missingAlts.push(img);
-		setError();
-	} 
-}
-
-// check as
-for (var i = 0; i < as.length; i++) {
-	if (ignoreLinkRegex.test(as[i])) 
-		continue;
-
-	if (!snoobiRegex.test(as[i])) {
-		missingSnoobi.push(as[i]);
-		setError();
-	}
-
-	if (isEemeliMail.checked && !as[i].hasAttribute("redirect")) {
-		as[i].setAttribute('id', 'domErrorRedirect_'+i);
-		missingRedirect.push(as[i]);
-		setError();
-	}
-}
-
-if(errors) {
-	var missingSnoobiString = "<ul id='snoobiErrors'>";
-	var heightTooLowString = "<ul id='heightTooLowErrors'>";
-	var missingRedirectString = "<ul id='missingRedirectErrors'>";
-	var missingAltString = "<ul id='missingAltErrors'>";
-	var errorMsg = "<h2 style='color:#f00 !important;'>Errors</h2>";
-
-	for (var i = 0; i < missingSnoobi.length; i++) {
-		missingSnoobiString += "<li>" + missingSnoobi[i] + "</li>";
-	}
-	missingSnoobiString += "</ul>";
-
-	for (var i = 0; i < heightTooLow.length; i++) {
-		heightTooLowString += getErrorLink(heightTooLow[i]);
-	}
-	heightTooLowString += "</ul>";
-
-	for (var i = 0; i < missingRedirect.length; i++) {
-		missingRedirectString +=  getErrorLink(missingRedirect[i]);
-	}
-	missingRedirectString += "</ul>";
-
-	for (var i = 0; i < missingAlts.length; i++) {
-		missingAltString += getErrorLink(missingAlts[i]);
-	}
-	missingAltString += "</ul>";
-
-	if (missingSnoobiString) {
-		errorMsg += "<h3>Found links with missing/broken snoobi tags</h3>" + missingSnoobiString;
-	}
-
-	if (heightTooLowString) {
-		errorMsg += "<h3>Found tds with too low height</h3>" + heightTooLowString;
-	}
-
-	if (missingRedirect.length && missingRedirectString) {
-		errorMsg += "<h3>Found hrefs with missing redirect-attribute (eemeli-mail)</h3>" + missingRedirectString;
-	}
-
-	if (missingAltString) {
-		errorMsg += "<h3>Found imgs with missing or empty alt-attribute</h3>" + missingAltString;
-	}
-
-	printMessageForm(errorMsg);
-} else if(!errors) { 
-	var html = "";
-	html += "<h2 style='font-family:Comic Sans MS;color:hotpink !important;'>Html passed ;-)</h2>";
-html += "<img style='margin:20px 0;' src='http://i.imgur.com/igEwpy7.jpg' />";
-html += "<iframe width='320' height='315' src='//www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1' frameborder='0' allowfullscreen></iframe>";
-printMessageForm(html);
-}
+		printMessageForm(errorMsg);
+		} else { 
+			printMessageForm("<h2 class='pass'>Html passed! :-)</h2>");
+		}
 }
 
 }());
