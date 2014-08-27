@@ -36,9 +36,19 @@ html += "</div>";
 var formDiv = document.createElement("div");
 formDiv.setAttribute("id", "container");
 formDiv.innerHTML = html;
-
 db.insertBefore(formDiv, db.childNodes[0]);
 /* END HTML */
+
+/* CSS */
+var css = "/* tester.js css */";
+css += "#container {font-family: 'Comic Sans MS';color: hotpink;position: fixed;top: 20px;left: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;}button {width: 100%;}";
+css += "#errors {position: fixed;top: 20px;right: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;overflow: auto;}.et_activeLink a {color: purple !important;}";
+css += ".et_activeDomElement {outline: 1px solid #f00;}h2.pass {font-family: 'Comic Sans MS';color: hotpink !important;font-size: 22px !important;}";
+var style = document.createElement("style");
+style.type = "text/css";
+style.appendChild(document.createTextNode(css));
+document.head.appendChild(style);
+/* END CSS */
 
 var bgPosY = parseInt(db.style.backgroundPositionY);
 var bgPosX = parseInt(db.style.backgroundPositionX);
