@@ -42,8 +42,8 @@ db.insertBefore(formDiv, db.childNodes[0]);
 /* CSS */
 var css = "/* tester.js css */";
 css += "#container {font-family: 'Comic Sans MS';color: hotpink;position: fixed;top: 20px;left: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;}button {width: 100%;}";
-css += "#errors {position: fixed;top: 20px;right: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;overflow: auto;}.et_activeLink a {color: purple !important;}";
-css += ".et_activeDomElement {outline: 1px solid #f00;}h2.pass {font-family: 'Comic Sans MS';color: hotpink !important;font-size: 22px !important;}";
+css += "#errors {position: fixed;top: 20px;right: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;overflow: scroll; height:1000px;}.et_activeLink a {color: purple !important;}";
+css += ".et_activeDomElement {outline: 1px solid #f00;}h2.pass {font-family: 'Comic Sans MS';color: hotpink !important;font-size: 22px !important;}.error{color:#f00 !important;}";
 var style = document.createElement("style");
 style.type = "text/css";
 style.appendChild(document.createTextNode(css));
@@ -229,22 +229,26 @@ function attachErrorMsgListeners() {
 		errorTd = errorTdLis[i];
 
 		errorTd.addEventListener("mouseover", function(event){
-			getDomElementFromEvent(event).classList.add('et_activeDomElement');
-			this.classList.add('et_activeLink');
-			href = this;
+			try {
+				getDomElementFromEvent(event).classList.add('et_activeDomElement');
+				this.classList.add('et_activeLink');
+				href = this;
+			} catch (error) {}
 		}, false);
 
 		errorTd.addEventListener("mouseout", function(event){
-			getDomElementFromEvent(event).classList.remove('et_activeDomElement');
-			href.classList.remove('et_activeLink');
+			try {
+				getDomElementFromEvent(event).classList.remove('et_activeDomElement');
+				href.classList.remove('et_activeLink');
+			} catch (error) {}
 		}, false);
 	};
 }
 
 
 function checkHTML(){
-	function getImgName(img){
-		return img.src.substring(img.src.lastIndexOf("/")+1);
+	function getImgName(src){
+		return src.substring(src.lastIndexOf("/")+1);
 	}
 
 	function getInnerText(el) {
@@ -260,38 +264,38 @@ function checkHTML(){
 	// strip "dom" from element id
 	// check innertext length so that tds
 	// that only have the content "&nbsp;" dont get included
-	var elLinkText = el.src ? el.src : el.innerText.length > 10 ? el.innerText : el; 
+	var elLinkText = el.src ? getImgName(el.src) : el.innerText.length > 10 ? el.innerText : el; 
 	return "<li><a id='" + el.id.substring(3) + "' style='color:#00f;' href='#'>" + elLinkText + "</a></li>";
-	}
+}
 
-	function printMessageForm(message) {
-		var formDiv = document.createElement("div");
-		formDiv.setAttribute("id", "errors");
-		formDiv.style.width = document.getElementById("container").offsetWidth + "px";
-		formDiv.innerHTML = message;
-		db.insertBefore(formDiv, db.childNodes[0]);
-		attachErrorMsgListeners();
-	}
+function printMessageForm(message) {
+	var formDiv = document.createElement("div");
+	formDiv.setAttribute("id", "errors");
+	formDiv.style.width = document.getElementById("container").offsetWidth + "px";
+	formDiv.innerHTML = message;
+	db.insertBefore(formDiv, db.childNodes[0]);
+	attachErrorMsgListeners();
+}
 
-	var table = document.getElementsByTagName("table")[0];
-	var tds   = table.getElementsByTagName("td");
-	var imgs  = table.getElementsByTagName("img");
-	var as    = table.getElementsByTagName("a");
+var table = document.getElementsByTagName("table")[0];
+var tds   = table.getElementsByTagName("td");
+var imgs  = table.getElementsByTagName("img");
+var as    = table.getElementsByTagName("a");
 
-	var td  = "";
-	var img = "";
-	var a   = "";
+var td  = "";
+var img = "";
+var a   = "";
 
-	var emptyAlts    	 = [];
-	var missingAlts  	 = [];
-	var heightTooLow 	 = [];
-	var missingSnoobi    = [];
-	var missingRedirect  = [];
+var emptyAlts    	 = [];
+var missingAlts  	 = [];
+var heightTooLow 	 = [];
+var missingSnoobi    = [];
+var missingRedirect  = [];
 
-	var error = false;
+var error = false;
 
-	var snoobiRegex = /.+\?(newsletter|ad)=.+/;
-	var ignoreLinkRegex = /.+\.(pdf|docx?|pptx?|xslx?)\??.*|#/;
+var snoobiRegex = /.+\?(newsletter|ad)=.+/;
+var ignoreLinkRegex = /.+\.(pdf|docx?|pptx?|xslx?)\??.*|#|mailto\:.+/;
 
 	// check tds
 	var hasHeight = false;
@@ -333,53 +337,27 @@ function checkHTML(){
 		}
 	}
 
+	function addErrors(error_array, error_header) {
+		var error_string = "";
+
+		for (var i = 0; i < error_array.length; i++) {
+			error_string += getErrorLink(error_array[i]);
+		}
+
+		return error_header + error_string + "</ul>";
+	}
+
 	if(error) {
-		var missingSnoobiString = "<ul id='snoobiErrors'>";
-		var heightTooLowString = "<ul id='heightTooLowErrors'>";
-		var missingRedirectString = "<ul id='missingRedirectErrors'>";
-		var missingAltString = "<ul id='missingAltErrors'>";
-		var errorMsg = "<h2 style='color:#f00 !important;'>Errors</h2>";
-
-		for (var i = 0; i < missingSnoobi.length; i++) {
-			missingSnoobiString += "<li>" + missingSnoobi[i] + "</li>";
-		}
-		missingSnoobiString += "</ul>";
-
-		for (var i = 0; i < heightTooLow.length; i++) {
-			heightTooLowString += getErrorLink(heightTooLow[i]);
-		}
-		heightTooLowString += "</ul>";
-
-		for (var i = 0; i < missingRedirect.length; i++) {
-			missingRedirectString +=  getErrorLink(missingRedirect[i]);
-		}
-		missingRedirectString += "</ul>";
-
-		for (var i = 0; i < missingAlts.length; i++) {
-			missingAltString += getErrorLink(missingAlts[i]);
-		}
-		missingAltString += "</ul>";
-
-		if (missingSnoobiString) {
-			errorMsg += "<h3>Found links with missing/broken snoobi tags</h3>" + missingSnoobiString;
-		}
-
-		if (heightTooLowString) {
-			errorMsg += "<h3>Found tds with too low height</h3>" + heightTooLowString;
-		}
-
-		if (missingRedirect.length && missingRedirectString) {
-			errorMsg += "<h3>Found hrefs with missing redirect-attribute (eemeli-mail)</h3>" + missingRedirectString;
-		}
-
-		if (missingAltString) {
-			errorMsg += "<h3>Found imgs with missing or empty alt-attribute</h3>" + missingAltString;
-		}
+		var errorMsg = "<h2 class='error'>Errors</h2>";
+		errorMsg += missingSnoobi.length ? addErrors(missingSnoobi, "<h3>Found links with missing/broken snoobi tags</h3>") : "";
+		errorMsg += heightTooLow.length ? addErrors(heightTooLow, "<h3>Found tds with too low height</h3>") : "";
+		errorMsg += missingRedirect.length ? addErrors(missingRedirect, "<h3>Found hrefs with missing redirect-attribute (eemeli-mail)</h3>") : "";
+		errorMsg += missingAlts.length ? addErrors(missingAlts, "<h3>Found imgs with missing or empty alt-attribute</h3>") : "";
 
 		printMessageForm(errorMsg);
-		} else { 
-			printMessageForm("<h2 class='pass'>Html passed! :-)</h2>");
-		}
+	} else { 
+		printMessageForm("<h2 class='pass'>Html passed! :-)</h2>");
+	}
 }
 
 }());
