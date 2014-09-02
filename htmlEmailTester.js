@@ -6,6 +6,7 @@
 
 var db = document.body;
 var bodyHeight = document.body.clientHeight;
+var hasOpacity = localStorage.getItem('backgroundOpacity') ? localStorage.getItem('backgroundOpacity') : 0;
 
 db.style.height = 200 + bodyHeight + "px";
 db.style.backgroundImage = "url('bg.jpg')";
@@ -13,6 +14,7 @@ db.style.backgroundRepeat    = "no-repeat";
 
 db.style.backgroundPositionX = localStorage.getItem('backgroundX') ? localStorage.getItem('backgroundX') : calcDefaultBgPos() + "px";//default to mid
 db.style.backgroundPositionY = localStorage.getItem('backgroundY') ? localStorage.getItem('backgroundY') : "0px";
+db.style.opacity = localStorage.getItem('backgroundOpacity') ? calcOpacityValue(localStorage.getItem('backgroundOpacity')) : 0;
 
 /* HTML */
 var html = "";
@@ -31,6 +33,11 @@ html += "<br />";
 html += "<button id='toggleBorders'>Show borders</button>";
 html += "<br />";
 html += "<button id='checkHtml'>Check html</button>";
+html += "<br />";
+html += "<label for='bodyOpacity'>Body opacity</input>";
+html += "<input id='bodyOpacity' type='range' value='"+hasOpacity+"' min='0' max='50'></input>";
+html += "<br />";
+html += "<button id='resetBodyOpacity'>Reset opacity</input>";
 html += "</div>";
 
 var formDiv = document.createElement("div");
@@ -50,43 +57,49 @@ style.appendChild(document.createTextNode(css));
 document.head.appendChild(style);
 /* END CSS */
 
-var bgPosY = parseInt(db.style.backgroundPositionY);
-var bgPosX = parseInt(db.style.backgroundPositionX);
 
 document.onkeypress = function(event) {
+	var bgPosY = parseInt(db.style.backgroundPositionY);
+	var bgPosX = parseInt(db.style.backgroundPositionX);
+	
 	event = event || window.event;
 	var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
 
 	if(charCode) {
-if(charCode == 13) { // enter pressed, save position
-	localStorage.setItem('backgroundX', db.style.backgroundPositionX);
-	localStorage.setItem('backgroundY', db.style.backgroundPositionY);
-	alert("Bg position saved");
-} else {
-	var keyPressed = String.fromCharCode(charCode).toLowerCase();
-	switch(keyPressed) {
-		case 'w':
-		db.style.backgroundPositionY = --bgPosY + "px";
-		break;
+		var keyPressed = String.fromCharCode(charCode).toLowerCase();
+		var setPosY;
+		var setPosX;
 
-		case 's':
-		db.style.backgroundPositionY = ++bgPosY + "px";
-		break;
+		switch(keyPressed) {
+			case 'w':
+			setPosY = --bgPosY + "px";
+			db.style.backgroundPositionY = setPosY;
+			localStorage.setItem('backgroundY', setPosY);
+			break;
 
-		case 'a':
-		db.style.backgroundPositionX = --bgPosX + "px";
-		break;
+			case 's':
+			setPosY = ++bgPosY + "px";
+			db.style.backgroundPositionY = setPosY;
+			localStorage.setItem('backgroundY', setPosY);
+			break;
 
-		case 'd':
-		db.style.backgroundPositionX = ++bgPosX + "px";
-		break;
+			case 'a':
+			setPosX = --bgPosX + "px";
+			db.style.backgroundPositionX = setPosX;
+			localStorage.setItem('backgroundX', setPosX);
+			break;
 
-		default:
-		break;
+			case 'd':
+			setPosX = ++bgPosX + "px";
+			db.style.backgroundPositionX = setPosX;
+			localStorage.setItem('backgroundX', setPosX);
+			break;
+
+			default:
+			break;
+		}
 	}
 }
-}
-};
 
 var loc = window.location.href;
 
@@ -109,6 +122,17 @@ var bordersOn = false;
 isEemeliMail.addEventListener('click', function(){
 	localStorage.setItem('eemeli', this.checked ? true : '');
 },false);
+
+document.getElementById("bodyOpacity").addEventListener('click', function(){
+	document.body.style.opacity = calcOpacityValue(this.value);
+	localStorage.setItem('backgroundOpacity', this.value);
+}, false);
+
+document.getElementById("resetBodyOpacity").addEventListener('click', function(){ 
+	document.body.style.opacity = 1;
+	document.getElementById("bodyOpacity").value = 0;
+	localStorage.setItem('backgroundOpacity', 1);
+}, false);
 
 document.getElementById("toggleBg").addEventListener('click', function(){
 	if (bgHidden) {
@@ -243,6 +267,10 @@ function attachErrorMsgListeners() {
 			} catch (error) {}
 		}, false);
 	};
+}
+
+function calcOpacityValue(val) {
+	return "0." + (100 - val);
 }
 
 
