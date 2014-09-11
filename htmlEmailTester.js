@@ -16,14 +16,17 @@ db.style.backgroundPositionX = localStorage.getItem('backgroundX') ? localStorag
 db.style.backgroundPositionY = localStorage.getItem('backgroundY') ? localStorage.getItem('backgroundY') : "0px";
 db.style.opacity = localStorage.getItem('backgroundOpacity') ? calcOpacityValue(localStorage.getItem('backgroundOpacity')) : 0;
 
+var header = localStorage["isEmail"] ? "Html email tester" : "Html tester";
+
 /* HTML */
 var html = "";
 html += "<div id='hideContainer'>";
 html += "<span>[<a id='toggleTester' href='#'>hide tester</a>]</span>";
 html += "</div>";
 html += "<div id='htmlTester'>";
-html += "<h1>Html email tester</h1>";
-html += "<input style='margin-left:0;' type='checkbox' id='isEemeliMail'></input><label for='isEemeliMail'>Eemeli mail</label><br />";
+html += "<h1 id='tester_header'>"+header+"</h1>";
+html += "<input style='margin-left:0;' type='checkbox' id='isEmail'></input><label for='isEmail'>Email?</label>";
+html += "<div style='margin-left:10px;display:none;' id='isEemeliMailWrap'><input style='margin-left:0;' type='checkbox' id='isEemeliMail'></input><label for='isEemeliMail'>Eemeli mail?</label></div><br />";
 html += "<button id='resetBg'>Reset bg</button>";
 html += "<br />";
 html += "<button id='toggleBg'>Hide bg</button>";
@@ -34,10 +37,10 @@ html += "<button id='toggleBorders'>Show borders</button>";
 html += "<br />";
 html += "<button id='checkHtml'>Check html</button>";
 html += "<br />";
-html += "<label for='bodyOpacity'>Body opacity</input>";
-html += "<input id='bodyOpacity' type='range' value='"+hasOpacity+"' min='0' max='50'></input>";
+html += "<button id='resetBodyOpacity'>Reset opacity</button>";
 html += "<br />";
-html += "<button id='resetBodyOpacity'>Reset opacity</input>";
+html += "<label for='bodyOpacity'>Body opacity</label>";
+html += "<input id='bodyOpacity' type='range' value='"+hasOpacity+"' min='0' max='50'></input>";
 html += "</div>";
 
 var formDiv = document.createElement("div");
@@ -48,7 +51,7 @@ db.insertBefore(formDiv, db.childNodes[0]);
 
 /* CSS */
 var css = "/* tester.js css */";
-css += "#container {font-family: 'Comic Sans MS';color: hotpink;position: fixed;top: 20px;left: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;}button {width: 100%;}";
+css += "#htmlTester {border-radius:5%;width:370px;font-family: 'Comic Sans MS';color: #000;position: fixed;top: 20px;left: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;}button {border-radius: 5px;border: 1px solid #000;border-bottom: 2px solid #000;padding: 4px 8px;color: #000;font-size: 1.2em;font-weight: bold;background-color: #ffff01;margin-top:10px;width:100%;}";
 css += "#errors {position: fixed;top: 20px;right: 20px;border: 1px solid #000;padding: 20px;background-color: #fff;overflow: scroll; height:1000px;}.et_activeLink a {color: purple !important;}";
 css += ".et_activeDomElement {outline: 1px solid #f00;}h2.pass {font-family: 'Comic Sans MS';color: hotpink !important;font-size: 22px !important;}.error{color:#f00 !important;}";
 var style = document.createElement("style");
@@ -56,6 +59,15 @@ style.type = "text/css";
 style.appendChild(document.createTextNode(css));
 document.head.appendChild(style);
 /* END CSS */
+
+var isEemeliMailWrap = document.getElementById("isEemeliMailWrap");
+var isEmail = localStorage["isEmail"];
+
+console.log("localstorage.isEmail=",isEmail);
+
+
+document.getElementById("isEmail").checked = isEmail;
+isEemeliMailWrap.style.display = document.getElementById("isEmail").checked == true ? "inline" : "none";
 
 
 document.onkeypress = function(event) {
@@ -104,6 +116,7 @@ document.onkeypress = function(event) {
 var loc = window.location.href;
 
 var isEemeliMail = document.getElementById("isEemeliMail");
+var isEmail = document.getElementById("isEmail");
 
 if (localStorage.getItem('eemeli')) {
 	if (localStorage.eemeli) {
@@ -121,6 +134,12 @@ var bordersOn = false;
 /* Event listeners */
 isEemeliMail.addEventListener('click', function(){
 	localStorage.setItem('eemeli', this.checked ? true : '');
+},false);
+
+isEmail.addEventListener('click', function(){
+	document.getElementById("tester_header").innerText = this.checked ? "Html email tester" : "Html tester";
+	isEemeliMailWrap.style.display = this.checked ? "inline" : "none";
+	localStorage.setItem('isEmail', this.checked ? true : '');
 },false);
 
 document.getElementById("bodyOpacity").addEventListener('click', function(){
